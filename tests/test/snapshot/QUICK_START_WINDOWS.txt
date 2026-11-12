@@ -1,0 +1,28 @@
+LUNAR LINK PLANNER v7 - SCHNELLSTART (Windows 10/11)
+
+- START_APP.bat doppelklicken.
+Voraussetzung: Python 3 ist installiert (python.org, "Add python.exe to PATH" aktiviert).
+
+- Der Browser oeffnet automatisch http://127.0.0.1:8765/index.html
+Das Konsolenfenster offen lassen, solange die App laeuft.
+
+- Startansicht "Entire Solar System" (Overview, nicht massstabsgetreu) zeigt alle
+acht Planeten. Datum aendern oder Regler ziehen; Spruenge mit -10, +10, +100
+Jahren oder eigener Jahreszahl.
+
+- Fuer echte Groessenverhaeltnisse "True scale" waehlen und einen Koerper
+fokussieren - bei echten Distanzen sind Planeten winzige Punkte.
+
+- Mondoberflaeche: "Moon terrain / craters" waehlen, dann "Add Moon stop" klicken
+und Punkte auf dem Mond oder in der 2D-Karte setzen.
+
+- Die Beleuchtung kommt ausschliesslich von der Sonne. Schatten und
+Tag/Nacht-Grenzen folgen der tatsaechlichen Sonnenposition zum gewaehlten
+Datum - auch in der reinen Mondansicht.
+
+Beenden: Konsolenfenster schliessen oder Strg+C.
+
+GRENZEN: Kein zertifiziertes Missionswerkzeug. Planetenelemente und
+Rotationsphasen sind Naeherungen; Oberflaechenrouten nutzen grobe LOLA-Hoehen;
+Funkfenster zeigen geometrische Sichtlinie, nicht Signalqualitaet. Fuer Three.js
+und NASA-Daten wird Internet benoetigt. Details in README.md.

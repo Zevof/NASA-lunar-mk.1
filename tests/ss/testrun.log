@@ -1,0 +1,105 @@
+﻿✔ Earth to Moon route uses physics-derived Hohmann transfer (0.9229ms)
+✔ surveyTransfers returns best-effort candidates in preview mode (81165.8718ms)
+✔ geocentric Hohmann route is wired into the route UI (4.3443ms)
+=== MISSION DATA CONSISTENCY TEST ===
+
+1. Prüfung der geforderten Programme:
+   ✓ Apollo: vorhanden
+   ✓ Luna: vorhanden
+   ✓ Chang'e: vorhanden
+   ✓ Chandrayaan: vorhanden
+   ✓ CLPS: vorhanden
+   ✓ Artemis: vorhanden
+
+2. Prüfung der geforderten Agenturen:
+   ✓ NASA: vorhanden
+   ✓ CNSA: vorhanden
+   ✓ ISRO: vorhanden
+   ✓ Intuitive Machines: vorhanden
+   ✓ Firefly Aerospace: vorhanden
+   ✓ ispace: vorhanden
+
+3. Konsistenzprüfung zwischen JSON und landing-sites-core.mjs:
+   ✓ apollo11: Koordinaten konsistent
+   ✓ apollo12: Koordinaten konsistent
+   ✓ apollo14: Koordinaten konsistent
+   ✓ apollo15: Koordinaten konsistent
+   ✓ apollo16: Koordinaten konsistent
+   ✓ apollo17: Koordinaten konsistent
+   ✓ luna9: Koordinaten konsistent
+   ✓ luna16: Koordinaten konsistent
+   ✓ luna17: Koordinaten konsistent
+   ✓ luna24: Koordinaten konsistent
+   ✓ luna25: Koordinaten konsistent
+   ✓ change3: Koordinaten konsistent
+   ✓ change4: Koordinaten konsistent
+   ✓ change5: Koordinaten konsistent
+   ✓ change6: Koordinaten konsistent
+   ✓ im1: Koordinaten konsistent
+   ✓ firefly1: Koordinaten konsistent
+   ✓ artemis_sp: Koordinaten konsistent
+   ✓ artemis_connect: Koordinaten konsistent
+   ✓ artemis_shackleton: Koordinaten konsistent
+   ✓ chandrayaan3: Koordinaten konsistent
+
+   ✓ Koordinaten-Konsistenz: 0 Abweichungen
+
+4. Prüfung spezifischer Missionen:
+   ✓ Apollo 11 (apollo11): vorhanden
+   ✓ Apollo 17 (apollo17): vorhanden
+   ✓ Luna 9 (luna9): vorhanden
+   ✓ Chang'e 3 (change3): vorhanden
+   ✓ Chang'e 4 (change4): vorhanden
+   ✓ Chang'e 6 (change6): vorhanden
+   ✓ Chandrayaan-3 (chandrayaan3): vorhanden
+   ✓ IM-1 Odysseus (im1): vorhanden
+   ✓ Blue Ghost M1 (firefly1): vorhanden
+   ✓ Hakuto-R M1 (hakuto_r_m1): vorhanden
+
+5. Koordinaten-Validierung:
+   ✓ Alle 22 Sites haben gültige Koordinaten
+
+6. Referenzrahmen-Dokumentation:
+   ✓ Referenzrahmen korrekt dokumentiert: Mean Earth/Polar Axis (ME)
+
+=== ZUSAMMENFASSUNG ===
+✓ 22 Sites in lunar-sites.json
+✓ 21 Sites in landing-sites-core.mjs
+✓ Alle geforderten Programme vorhanden: Apollo, Luna, Chang'e, Chandrayaan, CLPS, Artemis
+✓ Alle geforderten Agenturen vorhanden: NASA, CNSA, ISRO, Intuitive Machines, Firefly Aerospace, ispace
+✓ Koordinaten-Konsistenz: 0 Abweichungen (Toleranz: 0.01°)
+✓ Alle spezifischen Missionen vorhanden
+✓ Alle Koordinaten gültig
+
+✅ Alle Konsistenztests bestanden.
+✔ tests\mission-data-consistency.test.mjs (200.8222ms)
+✓ validateCustomCoordinates: valid input with longitude wrap
+✓ validateCustomCoordinates: rejects invalid latitude
+✓ validateCustomCoordinates: rejects NaN
+✓ assessRelativitySignificance: lunar transfer deltaT = 0.171 ms (not significant)
+✓ assessRelativitySignificance: high-speed transfer deltaT = 219.303 ms (significant)
+✓ generateTimelinePreview: generated 25 events for 24h period
+
+✅ All mission-planning.js tests passed.
+✔ tests\mission-planning.test.mjs (1417.7484ms)
+✔ Hohmann Earth to Mars has plausible transfer time and positive burns (1.4952ms)
+✔ Bi-elliptic transfer validates apoapsis and returns three burns (1.1153ms)
+✔ Lambert arc reaches the requested arrival position (3.3111ms)
+✔ Swing-by planner returns a patched-conic trajectory and metrics (12.9075ms)
+✔ Scale mode switching (1.1696ms)
+✔ True scale units and body radii (1.4221ms)
+✔ Moon orbit independent position and ~60.3 ratio (3.4801ms)
+✔ Earth and Moon receive effectively parallel sunlight (3.4407ms)
+✔ Moon-only sunlight follows the Sun-to-Moon direction (2.317ms)
+✔ Sunlight direction is normalised for arbitrary geometry (0.3821ms)
+✔ Coincident positions use a stable fallback direction (3.6322ms)
+✔ Batch helper returns directions in input order (0.6243ms)
+✔ Terrain max elevation and displacement correctness (1.1322ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83580.976

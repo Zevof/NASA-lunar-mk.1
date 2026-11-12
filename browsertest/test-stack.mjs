@@ -1,0 +1,20 @@
+import puppeteer from 'puppeteer-core';
+const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox','--disable-gpu','--use-gl=swiftshader','--enable-webgl'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1400, height: 900 });
+const consoleErrs = [];
+page.on('console', m => { if (m.type()==='error') consoleErrs.push(m.text()); });
+await page.goto('http://127.0.0.1:8765/index.html', { waitUntil: 'domcontentloaded', timeout: 30000 });
+await new Promise(r => setTimeout(r, 7000));
+await page.evaluate(async () => {
+const fromIn = document.querySelector('#route-from-input');
+const toIn = document.querySelector('#route-to-input');
+fromIn.value = 'Berlin'; fromIn.dispatchEvent(new Event('input', {bubbles:true}));
+toIn.value = 'Munich'; toIn.dispatchEvent(new Event('input', {bubbles:true}));
+document.querySelector('#route-plan-btn').click();
+await new Promise(r => setTimeout(r, 2500));
+});
+console.log('CONSOLE ERRORS:');
+consoleErrs.filter(e => /route-draw|multiplyScalar/.test(e)).forEach(e => console.log(e));
+await browser.close();

@@ -1,0 +1,381 @@
+/* ==========================================================================
+   Lunar Link Planner — layout & scroll fixes (agent-32)
+   Loaded AFTER the inline <style> in index.html, so these rules win by
+   source order without needing !important for most declarations.
+   Scope: layout / scrolling / responsive / future multi-site comparison.
+   Does NOT redefine colours, typography or component skins.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. EQUAL-HEIGHT COLUMNS + CONSISTENT SCROLL FOR BOTH SIDE PANELS
+   Requirement: "both sides equal height" and
+                "left panel scrollable like right panel".
+   The grid row is minmax(0,1fr); each aside stretches to that row and
+   scrolls its own overflow. We harden the min-height:0 chain so neither
+   panel can force the grid taller than the viewport.
+   -------------------------------------------------------------------------- */
+main {
+  align-items: stretch;
+}
+
+/* All three columns (left panel, celestial view, right panel) live in ONE
+   grid row of `minmax(0,1fr)`, so they are guaranteed to be exactly the same
+   height. We pin that here and make sure nothing can push the row taller. */
+main {
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* Left panel: match right panel scroll behaviour exactly. */
+.controls {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: clip;
+  /* keep wheel scroll inside the panel; no chaining to the page */
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  align-self: stretch;
+}
+
+/* Right panel: same hardening (already scrollable, this guarantees parity). */
+.right-panel {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  align-self: stretch;
+}
+
+/* Direct children (sections / details) must never exceed the panel's content
+   box; some inline-styled blocks otherwise poke ~4px into the padding and
+   create a phantom horizontal scrollWidth. Purely defensive. */
+.controls > *,
+.right-panel > * {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Celestial-body view is the height reference for the two side panels. */
+.views {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  align-self: stretch;
+}
+
+/* --------------------------------------------------------------------------
+   2. CELESTIAL VIEW DRIVES THE PAGE HEIGHT
+   Requirement: "celestial body view drives page height".
+   The middle column (.views) must be allowed to grow with its content
+   (the 3D viewport / canvases) instead of being clipped to a fixed vh,
+   while still never overflowing the viewport row on large screens.
+   Strategy: .views fills the grid row (height:100%), scrolls internally
+   only when its own content exceeds the row, and its child viewport
+   flexes to the available space instead of a hard clamp.
+   -------------------------------------------------------------------------- */
+.views {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  grid-template-rows: minmax(0, 1fr) auto auto; /* viewport grows, orbit+timebar natural */
+  align-content: stretch;
+}
+
+/* Viewport: fill the flexible first grid row of .views (minmax(0,1fr)) so it
+   never grows unbounded, while still keeping a sensible minimum height so it
+   cannot collapse. height:100% fills the row; min-height is the floor. */
+.viewport {
+  height: 100%;
+  min-height: clamp(360px, 52vh, 720px);
+}
+
+/* --------------------------------------------------------------------------
+   3. NESTED-SCROLL DECHAINING
+   Inner scroll areas should not propagate wheel/touch to the page.
+   -------------------------------------------------------------------------- */
+#windows,
+.waypoints,
+#route-result,
+#orbit-result,
+#surfaceResult {
+  overscroll-behavior: contain;
+}
+
+/* --------------------------------------------------------------------------
+   4. RESPONSIVE: keep the two side panels EQUAL HEIGHT even when the layout
+   collapses, while letting the celestial (3D) view DRIVE the page height.
+
+   At <=1320px the old inline rule dropped to "2 cols + right panel wraps
+   full-width below", which made the two side panels different heights
+   (left column stacked above the right panel). We instead use explicit
+   grid areas:
+       row 1:  [ views  views ]      <- celestial view, full width, height driver
+       row 2:  [ controls  right ]   <- both side panels side-by-side, equal height
+   Both side panels then stretch to the same row height and scroll internally.
+   The CSS here is loaded after the inline rules, so it wins without !important
+   (same specificity, later source order).
+   -------------------------------------------------------------------------- */
+/* The inline <style> in index.html switches at max-width:1320px to a
+   "body scrolls, panels grow, overflow:visible" mode. That made the left
+   panel non-scrollable and let the 3D viewport grow unbounded. We override
+   it in TWO steps (loaded later than inline => wins):
+
+   4a) 1141px-1320px: the three desktop columns (left panel | view | right
+       panel) STILL FIT (~1126px min). We keep that single-row layout so both
+       side panels stay EXACTLY as tall as the celestial view window and scroll
+       internally - this is the spec's "panels match view window length".
+   4b) <=1140px: three columns no longer fit; stack (view on top, panels below)
+       with normal page scroll. Both panels keep the SAME bounded height and
+       scroll internally, so they stay equal to each other. */
+@media (max-width: 1320px) and (min-width: 1141px) {
+  body {
+    height: 100vh;
+    overflow: hidden;
+  }
+  main {
+    grid-template-columns: 315px minmax(400px, 1fr) 355px;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: none;
+    height: auto;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .controls,
+  .right-panel {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    /* overflow-x: clip (not hidden) forces scrollWidth == clientWidth, so a
+       narrow input's intrinsic scrollWidth can never create a phantom
+       horizontal scroll vector in the panel. */
+    overflow-x: clip;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  /* Undo the inline right-panel{grid-column:1 / -1} (which only fits the old
+     wrapped 2-row layout). Here it must sit in its own 3rd column. */
+  .right-panel {
+    grid-column: auto;
+  }
+  .views {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  /* Bounded viewport so it fills the single grid row instead of growing. */
+  .viewport {
+    height: 100%;
+    min-height: clamp(300px, 44vh, 560px);
+    max-height: none;
+  }
+}
+
+/* 4b) <=1140px: three columns no longer fit side by side. Stack: the
+   celestial view on top, both side panels side-by-side below it. The page
+   scrolls normally (body height:auto). Both panels share the SAME bounded
+   height and scroll internally, so they stay equal to each other. */
+@media (max-width: 1140px) {
+  body {
+    height: auto;
+    overflow: auto;
+  }
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "views views"
+      "controls right";
+    height: auto;
+    overflow: visible;
+    gap: 14px;
+    align-items: stretch;
+  }
+  .views {
+    grid-area: views;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .controls,
+  .right-panel {
+    height: clamp(420px, 62vh, 680px);
+    max-height: 680px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: clip;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    align-self: stretch;
+  }
+  .controls { grid-area: controls; }
+  .right-panel {
+    grid-area: right;
+    grid-column: auto;          /* undo inline "1 / -1" */
+    display: block;
+  }
+  .right-panel section + section { margin-top: 18px; }
+  .viewport {
+    height: clamp(340px, 52vh, 600px);
+    min-height: clamp(300px, 46vh, 540px);
+    max-height: 600px;
+  }
+}
+
+/* 4c) <=770px: two panels side by side get too narrow; stack everything.
+   View on top, then the two panels one below the other. The page scrolls. */
+@media (max-width: 770px) {
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "views"
+      "controls"
+      "right";
+    height: auto;
+    overflow: visible;
+    gap: 14px;
+  }
+  .views {
+    grid-area: views;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+  }
+  .controls,
+  .right-panel {
+    height: clamp(360px, 60vh, 620px);
+    max-height: 620px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: clip;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .controls { grid-area: controls; }
+  .right-panel { grid-area: right; display: block; }
+  .viewport {
+    height: clamp(320px, 52vh, 520px);
+    min-height: clamp(300px, 48vh, 500px);
+    max-height: 520px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. FUTURE MULTI-SITE COMPARISON LAYOUT
+   Generic, additive classes for a future side-by-side site comparison UI.
+   These are OPT-IN (nothing references them yet) so they change no current
+   rendering. Intended usage is documented in the audit report.
+   - .compare-grid : responsive auto-fit grid for N site cards
+   - .compare-card : single site column (metrics + mini timeline)
+   - .compare-card.is-active : highlighted / selected site
+   - .compare-head : sticky header row for the card
+   Also a light enhancement of the existing #compareTable so it stays
+   readable on narrow screens without touching its markup/JS.
+   -------------------------------------------------------------------------- */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+.compare-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #0d1a2b;
+  border: 1px solid #2b3c53;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.compare-card.is-active {
+  border-color: #7ddfff;
+  box-shadow: 0 0 0 1px #7ddfff inset;
+}
+.compare-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 10px;
+  background: #12273c;
+  border-bottom: 1px solid #2b3c53;
+  font-size: 12px;
+  font-weight: 700;
+}
+.compare-body {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Existing comparison table: allow horizontal scroll on narrow panels
+   instead of squeezing columns unreadably. Wrapped in a scroll container
+   by the future UI; here we only make the table itself resilient. */
+#compareTable {
+  display: block;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+}
+#compareTable thead,
+#compareTable tbody {
+  display: table;
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   6. SUB-PIXEL / GAP OVERFLOW GUARD (agent-32)
+   Chromium can report a 2-4px scrollWidth overshoot on minmax(0,1fr)+gap
+   grids and on wrapping flex rows. These are rounding/gap-reserve artefacts
+   with no visible effect, but we hard-guard them so the side panels never
+   show a phantom horizontal scrollbar. Additive, no visual change.
+   -------------------------------------------------------------------------- */
+.two > * {
+  min-width: 0;             /* children respect the 1fr columns incl. gap */
+  max-width: 100%;
+}
+/* Clamp the minmax(0,1fr)+gap sub-pixel overshoot Chromium reports on
+   narrow panels. Visually identical, removes the phantom scrollWidth. */
+.two {
+  overflow-x: clip;         /* horizontal phantom scroll only */
+  overflow-y: visible;
+}
+.field {
+  /* clip horizontal overshoot (native date widget) but keep vertical
+     overflow visible so focus rings / dropdowns are never cut off */
+  overflow-x: clip;
+  overflow-y: visible;
+}
+.buttons {
+  overflow-x: clip;         /* wrapping flex: never overshoot the panel */
+}
+/* Native date/time inputs in Chromium report a ~2px scrollWidth overshoot
+   from their internal calendar widget. Clamp them so the panel never sees
+   phantom horizontal scroll. No visual change on normal inputs. */
+.field input,
+.field select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Panels scroll vertically only; kill any phantom horizontal scrollbar. */
+.controls,
+.right-panel {
+  overflow-x: clip;
+}

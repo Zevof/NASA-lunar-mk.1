@@ -1,0 +1,14 @@
+{
+  "appId": "com.lunarlink.planner",
+  "appName": "Lunar Link Planner",
+  "webDir": "static",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

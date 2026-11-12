@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+android/app/build/
+android/.gradle/
+android/local.properties
+*.apk
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local development and diagnostic artifacts
+.ki-crew-tmp/
+_review_tmp/
+temp/
+tmp/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store

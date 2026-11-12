@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar Link Planner — Deep 3D Solar System (NASA Grade)</title>
+<meta name="description" content="Interactive 3D solar system with true-scale planets, DEM terrain, layer toggles, and delta-V route planning. NASA-grade visualization.">
+<meta name="theme-color" content="#05070d">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/ui.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#05070d;color:#d7e1f4;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden}
+  #deep-root{position:relative;width:100vw;height:100vh}
+  #deep-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  #deep-header{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(180deg,rgba(5,7,13,.92),rgba(5,7,13,0));z-index:20;pointer-events:none}
+  #deep-header > *{pointer-events:auto}
+  #deep-brand{font-weight:700;font-size:16px;letter-spacing:.02em}
+  #deep-brand small{display:block;font-size:11px;color:#8a93a6;font-weight:400;letter-spacing:.06em;margin-top:2px;text-transform:uppercase}
+  #deep-nav{display:flex;gap:8px;align-items:center}
+  #deep-nav a,#deep-nav button{background:#0a1020;color:#d7e1f4;border:1px solid #1a2338;border-radius:7px;padding:7px 12px;font:inherit;font-size:12px;text-decoration:none;cursor:pointer;transition:all .15s}
+  #deep-nav a:hover,#deep-nav button:hover{border-color:#4ea3ff;color:#7ad3ff}
+  #deep-panels{position:absolute;top:64px;right:16px;width:290px;max-height:calc(100vh - 100px);overflow:auto;display:flex;flex-direction:column;gap:10px;z-index:15}
+  .deep-panel{background:rgba(10,16,32,.92);backdrop-filter:blur(14px);border:1px solid #1a2338;border-radius:10px;padding:12px 14px}
+  .deep-panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#8a93a6;font-weight:600}
+  .deep-panel .llp-toggle{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:0;color:#d7e1f4;padding:6px 4px;font:inherit;font-size:13px;text-align:left;cursor:pointer;border-radius:5px}
+  .deep-panel .llp-toggle:hover{background:rgba(78,163,255,.08)}
+  .deep-panel .llp-toggle.active{color:#7ad3ff}
+  .deep-panel .llp-toggle::before{content:'';width:10px;height:10px;border-radius:50%;background:#3a4a62;flex:0 0 auto;transition:all .15s}
+  .deep-panel .llp-toggle.active::before{background:#4ea3ff;box-shadow:0 0 8px #4ea3ff}
+  #deep-status{position:absolute;bottom:14px;left:16px;font-size:11px;color:#8a93a6;font-family:ui-monospace,Consolas,monospace;background:rgba(5,7,13,.72);padding:6px 10px;border-radius:6px;border:1px solid #1a2338;z-index:15}
+  #deep-breadcrumb{position:absolute;top:64px;left:16px;display:flex;gap:6px;font-size:12px;color:#8a93a6;z-index:15}
+  #deep-breadcrumb span{cursor:pointer}
+  #deep-breadcrumb span:hover{color:#7ad3ff}
+  #deep-breadcrumb b{color:#d7e1f4;font-weight:600}
+  #deep-hint{position:absolute;bottom:14px;right:16px;font-size:11px;color:#8a93a6;background:rgba(5,7,13,.72);padding:6px 10px;border-radius:6px;border:1px solid #1a2338;z-index:15;max-width:340px;line-height:1.5}
+  #deep-hint kbd{background:#1a2338;padding:1px 5px;border-radius:3px;font-family:ui-monospace,monospace;font-size:10px}
+  #deep-toasts{position:absolute;bottom:80px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:30}
+  .deep-toast{background:rgba(10,16,32,.96);border:1px solid #1a2338;border-left:3px solid #4ea3ff;border-radius:6px;padding:10px 14px;font-size:12px;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  .deep-toast.error{border-left-color:#ff5a6a}
+  @media(max-width:768px){#deep-panels{width:calc(100vw - 32px);right:16px;top:auto;bottom:50px;max-height:40vh}#deep-hint{display:none}}
+</style>
+</head>
+<body>
+<div id="deep-root">
+  <canvas id="deep-canvas" aria-label="Interactive 3D solar system"></canvas>
+  <header id="deep-header">
+    <div id="deep-brand">Lunar Link Planner<small>Deep 3D Solar System · NASA-Grade Visualization</small></div>
+    <nav id="deep-nav">
+      <a href="/">← Classic Timeline View</a>
+      <button id="deep-scale-btn" type="button">True Scale</button>
+      <button id="deep-reset-btn" type="button">Reset View</button>
+    </nav>
+  </header>
+  <nav id="deep-breadcrumb"><b>Solar System</b></nav>
+  <aside id="deep-panels">
+    <section class="deep-panel">
+      <h3>Celestial Bodies</h3>
+      <div id="deep-planet-list"></div>
+    </section>
+    <section class="deep-panel">
+      <h3>Map Layers</h3>
+      <div id="deep-layer-list"></div>
+    </section>
+    <section class="deep-panel">
+      <h3>Camera</h3>
+      <button class="llp-toggle" data-zoom="0" type="button">Overview (all planets)</button>
+      <button class="llp-toggle" data-zoom="1" type="button">Inner Solar System</button>
+      <button class="llp-toggle" data-zoom="2" type="button">Selected Body</button>
+      <button class="llp-toggle" data-zoom="3" type="button">Near-Surface</button>
+    </section>
+  </aside>
+  <div id="deep-status">INITIALIZING · LOADING PLANETARY DATA</div>
+  <div id="deep-hint"><kbd>F</kbd> fit · <kbd>G</kbd> grid · <kbd>L</kbd> labels · <kbd>1-9</kbd> focus · <kbd>Esc</kbd> deselect</div>
+  <div id="deep-toasts"></div>
+</div>
+<script type="module">
+const status = document.getElementById('deep-status');
+const toasts = document.getElementById('deep-toasts');
+function showToast(msg, kind='info'){ const el=document.createElement('div'); el.className='deep-toast '+(kind==='error'?'error':''); el.textContent=msg; toasts.appendChild(el); setTimeout(()=>el.remove(), 4000); }
+function setStatus(html){ status.innerHTML = html; }
+try{
+  await import('/planet-data-sources.mjs');
+  const P = await import('/planets-core.mjs');
+  const planets = await P.loadAll();
+  await import('/scale-core.mjs');
+  await import('/terrain-core.mjs');
+  await import('/layers-core.mjs');
+  await import('/nav-core.mjs');
+  const R = await import('/solar-system-core.mjs');
+  await import('/ui-core.mjs');
+  setStatus('LOADING · ' + planets.length + ' BODIES · BUILDING SCENE');
+  const canvas = document.getElementById('deep-canvas');
+  await window.LLP.Renderer.init(canvas);
+  await window.LLP.Renderer.build();
+  window.LLP.Renderer.start();
+  // Planet list
+  const list = document.getElementById('deep-planet-list');
+  const order = ['sun','mercury','venus','earth','moon','mars','jupiter','saturn','uranus','neptune','pluto'];
+  for(const id of order){
+    const p = P.get(id);
+    if(!p) continue;
+    const btn = document.createElement('button');
+    btn.type='button'; btn.className='llp-toggle';
+    btn.textContent = p.name + ' · ' + (p.radiusKm||0).toLocaleString('en-US') + ' km';
+    btn.addEventListener('click', () => {
+      window.LLP.Renderer.focusBody(id, 3);
+      updateBreadcrumb(p.name);
+      setStatus('FOCUS · ' + p.name.toUpperCase() + ' · R=' + (p.radiusKm||0).toLocaleString('en-US') + ' km');
+    });
+    list.appendChild(btn);
+  }
+  // Layer list
+  const layers = [
+    {id:'terrain', name:'Surface Elevation (DEM)'},
+    {id:'craters', name:'Impact Craters'},
+    {id:'mountains', name:'Mountain Highlights'},
+    {id:'atmosphere', name:'Atmospheric Halo'},
+    {id:'clouds', name:'Cloud Cover'},
+    {id:'orbits', name:'Orbital Trajectories'},
+    {id:'labels', name:'Object Labels'},
+    {id:'grid', name:'Reference Grid'},
+    {id:'rings', name:'Ring Systems'}
+  ];
+  const layerList = document.getElementById('deep-layer-list');
+  const layerState = window.LLP.Layers?.getState?.() || {};
+  for(const L of layers){
+    const on = layerState[L.id] !== false;
+    const btn = document.createElement('button');
+    btn.type='button'; btn.className='llp-toggle'+(on?' active':''); btn.dataset.layer=L.id;
+    btn.textContent = L.name;
+    btn.setAttribute('aria-pressed', String(on));
+    btn.addEventListener('click', () => {
+      const nowOn = !btn.classList.contains('active');
+      btn.classList.toggle('active', nowOn);
+      btn.setAttribute('aria-pressed', String(nowOn));
+      window.LLP.Layers?.toggle?.(L.id, nowOn);
+      window.LLP.Renderer.setLayer(L.id, nowOn);
+    });
+    layerList.appendChild(btn);
+  }
+  // Camera buttons
+  for(const b of document.querySelectorAll('[data-zoom]')){
+    b.addEventListener('click', () => { window.LLP.Renderer.zoomTo(Number(b.dataset.zoom)); });
+  }
+  // Scale toggle
+  let trueScale = false;
+  const scaleBtn = document.getElementById('deep-scale-btn');
+  scaleBtn.addEventListener('click', () => {
+    trueScale = !trueScale;
+    window.LLP.Scale?.setMode?.(trueScale ? 'true' : 'overview');
+    scaleBtn.textContent = trueScale ? 'Overview Scale' : 'True Scale';
+    showToast(trueScale ? 'True scale: physical km distances' : 'Overview: compressed for visibility');
+  });
+  // Reset
+  document.getElementById('deep-reset-btn').addEventListener('click', () => {
+    window.LLP.Renderer.zoomTo(0); updateBreadcrumb(null);
+  });
+  function updateBreadcrumb(bodyName){
+    const bc = document.getElementById('deep-breadcrumb');
+    bc.innerHTML = '<span>Solar System</span>' + (bodyName ? ' / <b>'+bodyName+'</b>' : '');
+    bc.firstChild.addEventListener('click', () => window.LLP.Renderer.zoomTo(0));
+  }
+  // Keyboard shortcuts
+  window.addEventListener('keydown', (e) => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const key = e.key.toLowerCase();
+    if(key === 'f'){ window.LLP.Renderer.focusBody(window.LLP.Renderer.currentBodyId(), 3); }
+    else if(key === 'g'){ toggleLayer('grid'); }
+    else if(key === 'l'){ toggleLayer('labels'); }
+    else if(key === 'escape'){ window.LLP.Renderer.zoomTo(0); updateBreadcrumb(null); }
+    else if(/^[1-9]$/.test(key)){ const ids = ['sun','mercury','venus','earth','moon','mars','jupiter','saturn','uranus']; window.LLP.Renderer.focusBody(ids[Number(key)-1], 3); }
+  });
+  function toggleLayer(id){
+    const btn = layerList.querySelector('[data-layer="'+id+'"]');
+    if(btn) btn.click();
+  }
+  // Click to focus
+  canvas.addEventListener('dblclick', (e) => {
+    const hit = window.LLP.Renderer.raycastBody(e);
+    if(hit && hit.bodyId){ window.LLP.Renderer.focusBody(hit.bodyId, 3); setStatus('FOCUS · ' + hit.bodyId.toUpperCase() + ' · ' + hit.lat.toFixed(2) + '°, ' + hit.lon.toFixed(2) + '°'); }
+  });
+  setStatus('READY · ' + planets.length + ' BODIES · CLICK A PLANET OR USE THE PANEL');
+  document.title = 'Lunar Link Planner — Deep 3D (READY)';
+}catch(e){
+  setStatus('ERROR · ' + e.message);
+  showToast('Initialization failed: ' + e.message, 'error');
+  console.error(e);
+  document.title = 'Lunar Link Planner — Deep 3D (ERROR)';
+}
+</script>
+</body>
+</html>
